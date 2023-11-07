@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, View, Text } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -23,6 +24,8 @@ interface Params {
 
 type QuizProps = typeof QUIZ[0];
 
+const CARD_INCLINATION = 10
+
 export function Quiz() {
   const [points, setPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +35,7 @@ export function Quiz() {
 
   const shake = useSharedValue(0)
   const scrollY = useSharedValue(0)
+  const cardPosition = useSharedValue(0)
   const { navigate } = useNavigation();
 
   const route = useRoute();
@@ -131,6 +135,15 @@ const headerStyles = useAnimatedStyle(()=> {
     opacity: interpolate(scrollY.value, [70, 90],[1,0], Extrapolate.CLAMP)
   }
 })
+
+const dragStyles = useAnimatedStyle(()=> {
+  const rotateZ = cardPosition.value / CARD_INCLINATION
+  return {
+    transform:[{
+      translateX: cardPosition.value
+    }, {rotateZ: `${rotateZ}deg`}]
+  }
+})
   useEffect(() => {
     const quizSelected = QUIZ.filter(item => item.id === id)[0];
     setQuiz(quizSelected);
@@ -146,6 +159,20 @@ const headerStyles = useAnimatedStyle(()=> {
   if (isLoading) {
     return <Loading />
   }
+
+const onPan = Gesture.Pan().onUpdate((event)=> {
+  const moveToLeft = event.translationX < 0
+
+  if(moveToLeft) {
+    cardPosition.value = event.translationX
+  }
+ 
+
+}).onEnd(()=>{
+  cardPosition.value = withTiming(0)
+})
+
+
 
   return (
     <View style={styles.container}>
@@ -167,7 +194,8 @@ const headerStyles = useAnimatedStyle(()=> {
           totalOfQuestions={quiz.questions.length}
         />
         </Animated.View>
-    <Animated.View style={shakeStyleAnimated}>
+        <GestureDetector gesture={onPan}>
+    <Animated.View style={[shakeStyleAnimated, dragStyles]}>
         <Question
           key={quiz.questions[currentQuestion].title}
           question={quiz.questions[currentQuestion]}
@@ -175,6 +203,7 @@ const headerStyles = useAnimatedStyle(()=> {
           setAlternativeSelected={setAlternativeSelected}
         />
 </Animated.View>
+</GestureDetector>
         <View style={styles.footer}>
           <OutlineButton title="Parar" onPress={handleStop} />
           <ConfirmButton onPress={handleConfirm} />
