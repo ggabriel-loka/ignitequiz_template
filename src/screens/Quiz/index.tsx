@@ -83,6 +83,7 @@ export function Quiz() {
     if (quiz.questions[currentQuestion].correct === alternativeSelected) {
       setStatusReply(1)
       setPoints(prevState => prevState + 1);
+      handleNextQuestion()
     }else {
       setStatusReply(2)
       shakeAnimation()
@@ -108,7 +109,13 @@ export function Quiz() {
   }
 
   function shakeAnimation(){
-    shake.value = withSequence(withTiming(3, {duration:400, easing: Easing.bounce}), withTiming(0))
+
+    shake.value = withSequence(withTiming(3, {duration:400, easing: Easing.bounce}), withTiming(0, undefined, (finished)=>{
+      'worklet';
+      if(finished){
+        runOnJS(handleNextQuestion)()
+      }
+    }))
   }
 
 const shakeStyleAnimated = useAnimatedStyle(()=> {
@@ -207,6 +214,7 @@ const onPan = Gesture.Pan().activateAfterLongPress(200).onUpdate((event)=> {
         <GestureDetector gesture={onPan}>
     <Animated.View style={[shakeStyleAnimated, dragStyles]}>
         <Question
+          onUnmount={()=> setStatusReply(0)}
           key={quiz.questions[currentQuestion].title}
           question={quiz.questions[currentQuestion]}
           alternativeSelected={alternativeSelected}
