@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { Button } from '../../components/Button';
-
+import { Stars } from '../../components/Stars';
 import { styles } from './styles';
 
 interface Params {
@@ -18,6 +18,7 @@ export function Finish() {
 
   return (
     <View style={styles.container}>
+      <Stars/>
       <View style={styles.message}>
         <Text style={styles.title}>
           Parabéns!
