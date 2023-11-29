@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, View, Text, BackHandler } from 'react-native';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+import { GestureDetector, Gesture, TapGestureHandler } from 'react-native-gesture-handler'
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -15,7 +15,7 @@ import { Question } from '../../components/Question';
 import { QuizHeader } from '../../components/QuizHeader';
 import { ConfirmButton } from '../../components/ConfirmButton';
 import { OutlineButton } from '../../components/OutlineButton';
-import Animated, { Easing, Extrapolate, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSequence, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { Easing, Extrapolate, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSequence, withTiming, runOnJS, FadeIn, FadeOut, useDerivedValue } from 'react-native-reanimated';
 import { ProgressBar } from '../../components/ProgressBar';
 import { THEME } from '../../styles/theme';
 import { OverlayFeedback } from '../../components/OverlayFeedback';
@@ -27,7 +27,7 @@ interface Params {
 type QuizProps = typeof QUIZ[0];
 
 const CARD_INCLINATION = 10
-const CARD_SKIP_AREA = (-200)
+const CARD_SKIP_AREA = -200
 
 export function Quiz() {
   const [points, setPoints] = useState(0);
@@ -45,6 +45,7 @@ export function Quiz() {
 
   const route = useRoute();
   const { id } = route.params as Params;
+
 
   async function playSound(isCorrect: boolean) {
     const file = isCorrect ? require('../../assets/correct.mp3'): require('../../assets/wrong.mp3')
@@ -205,10 +206,16 @@ const onPan = Gesture.Pan().activateAfterLongPress(200).onUpdate((event)=> {
   cardPosition.value = withTiming(0)
 })
 
+const doubleTapGesture = Gesture.Tap().numberOfTaps(2).onEnd((event)=> {
+  runOnJS(Alert.alert)(('Here is your tip'))
+})
 
+const composed = Gesture.Simultaneous(
+  Gesture.Simultaneous(onPan, doubleTapGesture)
+);
 
   return (
-    <View style={styles.container}>
+    <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.container}>
       <OverlayFeedback status={statusReply}/>
       <Animated.View style={fixedProgressBarStyles}>
         <Text style={styles.title}>{quiz.title}</Text>
@@ -228,7 +235,8 @@ const onPan = Gesture.Pan().activateAfterLongPress(200).onUpdate((event)=> {
           totalOfQuestions={quiz.questions.length}
         />
         </Animated.View>
-        <GestureDetector gesture={onPan}>
+        <GestureDetector gesture={composed}>
+
     <Animated.View style={[shakeStyleAnimated, dragStyles]}>
         <Question
           onUnmount={()=> setStatusReply(0)}
@@ -240,10 +248,14 @@ const onPan = Gesture.Pan().activateAfterLongPress(200).onUpdate((event)=> {
 </Animated.View>
 </GestureDetector>
         <View style={styles.footer}>
-          <OutlineButton title="Parar" onPress={handleStop} />
+          <OutlineButton title="Parar" onPressOut={()=> {
+            handleStop()
+          }}
+       
+      />
           <ConfirmButton onPress={handleConfirm} />
         </View>
       </Animated.ScrollView>
-    </View >
+    </Animated.View >
   );
 }

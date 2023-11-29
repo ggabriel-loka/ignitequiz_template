@@ -1,6 +1,6 @@
 import { useEffect, } from 'react';
 import {  Text, Pressable, PressableProps } from 'react-native';
-import  Animated, {useSharedValue, useAnimatedStyle, withTiming, interpolateColor} from 'react-native-reanimated'
+import  Animated, {useSharedValue, useAnimatedStyle, withTiming, interpolateColor, useDerivedValue, interpolate, Easing} from 'react-native-reanimated'
 
 const PressableAnimated = Animated.createAnimatedComponent(Pressable)
 
@@ -26,31 +26,60 @@ export function Level({ title, type = 'EASY', isChecked = false, ...rest }: Prop
   const scale = useSharedValue(1) 
   const checked = useSharedValue(1)
 
+  const rotationAnimation = useSharedValue(0)
+
+  const rotation = useDerivedValue(()=>{
+
+    return interpolate(rotationAnimation.value, [0,100], [0,45])
+    
+  })
+
+  const rotationAnimationStyle = useAnimatedStyle(()=>{
+    return {
+      transform:[{rotate: rotation.value + 'deg'}, {scale: scale.value}],
+    }
+  },)
+
+
+  const startRotationAnimation = () => {
+    rotationAnimation.value= withTiming(100, {
+      duration:1000,
+      easing: Easing.ease
+    })
+  }
+
+  const startRotateBackAnimation = () => {
+    rotationAnimation.value= withTiming(0, {
+      duration:1000,
+      easing: Easing.ease
+    })
+  }
+  /////
 
   useEffect(()=>{
     checked.value = withTiming(isChecked ? 1 : 0)
   },[isChecked])
 
   function onPressIn(){
-    scale.value =  withTiming(1.1)
+    scale.value =  withTiming(1.1, {
+      duration: 50
+    })
+    startRotationAnimation()
   }
 
   function onPressOut(){
-    scale.value = withTiming(1)
+    scale.value = withTiming(1, {
+      duration:50
+    })
+    
+    startRotateBackAnimation()
   }
   
   const COLOR = TYPE_COLORS[type];
 
-  /**
-   * Interpolate color to make transition of colors.
-   */
-
-    /**
-   * Definir regras de estilização que queremos animar
-   */
     const animatedContainerStyle = useAnimatedStyle(()=> {
       return {
-        transform: [{scale: scale.value}],
+
         backgroundColor: interpolateColor(checked.value,[0, 1], ['transparent', COLOR])
       }
     })
@@ -67,7 +96,8 @@ export function Level({ title, type = 'EASY', isChecked = false, ...rest }: Prop
       [
         styles.container,
         { borderColor: COLOR},
-        animatedContainerStyle,
+        rotationAnimationStyle,
+         animatedContainerStyle,
       ] 
     }
     onPressIn={onPressIn} onPressOut={onPressOut} {...rest}>
