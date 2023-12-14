@@ -9,6 +9,7 @@ import { QuizCard } from '../../components/QuizCard';
 
 import { styles } from './styles';
 import { QUIZZES } from '../../data/quizzes';
+import { interpolate, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export function Home() {
   const [quizzes, setQuizzes] = useState(QUIZZES);
@@ -36,8 +37,8 @@ export function Home() {
     <View style={styles.container}>
       <Header
         icon={Trophy}
-        title="Vamos estudar"
-        subtitle="Treine seus conhecimento"
+        title="Let's study"
+        subtitle="Train your knowledge"
         onPress={() => navigate('history')}
       />
 
